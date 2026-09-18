@@ -42,30 +42,26 @@ def _expression(value: str = "value") -> OssieExpression:
 def _document() -> dict:
     return {
         "version": "0.2.0.dev0",
-        "semantic_model": [
+        "name": "typed_model",
+        "datasets": [
             {
-                "name": "typed_model",
-                "datasets": [
+                "name": "events",
+                "source": "catalog.schema.events",
+                "fields": [
                     {
-                        "name": "events",
-                        "source": "catalog.schema.events",
-                        "fields": [
-                            {
-                                "name": "occurred_at",
-                                "expression": _expression_data("occurred_at"),
-                                "dimension": {},
-                                "datatype": "DateTimeTz",
-                            }
-                        ],
+                        "name": "occurred_at",
+                        "expression": _expression_data("occurred_at"),
+                        "dimension": {},
+                        "datatype": "DateTimeTz",
                     }
                 ],
-                "metrics": [
-                    {
-                        "name": "revenue",
-                        "expression": _expression_data("SUM(events.revenue)"),
-                        "datatype": "Decimal",
-                    }
-                ],
+            }
+        ],
+        "metrics": [
+            {
+                "name": "revenue",
+                "expression": _expression_data("SUM(events.revenue)"),
+                "datatype": "Decimal",
             }
         ],
     }
@@ -89,22 +85,21 @@ def test_data_type_enum_matches_core_schema() -> None:
 def test_field_and_metric_datatypes_survive_serialization() -> None:
     document = OssieDocument.model_validate(_document())
 
-    field = document.semantic_model[0].datasets[0].fields[0]
-    metric = document.semantic_model[0].metrics[0]
+    field = document.datasets[0].fields[0]
+    metric = document.metrics[0]
     assert field.datatype is OssieDataType.DATE_TIME_TZ
     assert metric.datatype is OssieDataType.DECIMAL
 
     as_json = json.loads(document.to_ossie_json())
     as_yaml = yaml.safe_load(document.to_ossie_yaml())
     for serialized in (as_json, as_yaml):
-        model = serialized["semantic_model"][0]
-        assert model["datasets"][0]["fields"][0]["datatype"] == "DateTimeTz"
-        assert model["metrics"][0]["datatype"] == "Decimal"
+        assert serialized["datasets"][0]["fields"][0]["datatype"] == "DateTimeTz"
+        assert serialized["metrics"][0]["datatype"] == "Decimal"
 
 
 def test_invalid_datatype_is_rejected() -> None:
     document = _document()
-    field = document["semantic_model"][0]["datasets"][0]["fields"][0]
+    field = document["datasets"][0]["fields"][0]
     field["datatype"] = "timestamp"
 
     with pytest.raises(ValidationError):

@@ -35,8 +35,7 @@ def result():
 
 @pytest.fixture(scope="module")
 def model(result):
-    assert len(result.output.semantic_model) == 1
-    return result.output.semantic_model[0]
+    return result.output
 
 
 def _issues_of(result, issue_type):

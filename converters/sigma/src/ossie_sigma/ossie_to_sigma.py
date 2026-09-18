@@ -30,17 +30,16 @@ from ossie import (
     OssieField,
     OssieMetric,
     OssieRelationship,
-    OssieSemanticModel,
     OssieVendor,
 )
 
-from ossie_sigma.converter_issues import ConverterError, ConverterIssue, ConverterIssueType, ConverterResult
+from ossie_sigma.converter_issues import ConverterIssue, ConverterIssueType, ConverterResult
 from ossie_sigma.expression_utils import ansi_sql_text, infer_single_dataset_qualifier, sigma_dialect_text
 from ossie_sigma.sigma_formula import sql_to_sigma_formula
 from ossie_sigma.spec_keys import MODEL_LEVEL_SPEC_KEYS
 
 # Objects a `SIGMA` custom_extensions vendor entry can be attached to.
-_SigmaExtensionHost = Union[OssieDataset, OssieField, OssieMetric, OssieRelationship, OssieSemanticModel]
+_SigmaExtensionHost = Union[OssieDataset, OssieField, OssieMetric, OssieRelationship, OssieDocument]
 
 _ID_NAMESPACE = uuid5(NAMESPACE_URL, "ossie.apache.org/converters/sigma")
 
@@ -143,22 +142,7 @@ class OssieToSigmaConverter:
     def convert(self, document: OssieDocument) -> ConverterResult[dict[str, Any]]:
         issues: list[ConverterIssue] = []
 
-        if not document.semantic_model:
-            raise ConverterError(
-                "OssieDocument.semantic_model is empty; there is no semantic model to convert "
-                "into a Sigma data model spec."
-            )
-
-        if len(document.semantic_model) > 1:
-            issues.append(
-                ConverterIssue(
-                    ConverterIssueType.EXTRA_MODEL_DROPPED,
-                    "document",
-                    "Sigma data models are single semantic models; only semantic_model[0] "
-                    f"was converted, {len(document.semantic_model) - 1} additional model(s) were dropped.",
-                )
-            )
-        model = document.semantic_model[0]
+        model = document
         model_ext = _sigma_ext(model) or {}
 
         spec: dict[str, Any] = {"kind": "data-model", "name": model.name}

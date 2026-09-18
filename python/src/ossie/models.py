@@ -194,7 +194,7 @@ class OssieMetric(BaseModel):
 
 
 class OssieSemanticModel(BaseModel):
-    """Top-level container representing a complete semantic model."""
+    """Semantic model: the datasets, relationships, and metrics for one business domain."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -207,15 +207,10 @@ class OssieSemanticModel(BaseModel):
     custom_extensions: Optional[list[OssieCustomExtension]] = None
 
 
-class OssieDocument(BaseModel):
-    """Root Ossie document."""
-
-    model_config = ConfigDict(frozen=True)
+class OssieDocument(OssieSemanticModel):
+    """Root Ossie document: one semantic model defined directly at the document root."""
 
     version: str = "0.2.0.dev0"
-    dialects: Optional[list[OssieDialect]] = None
-    vendors: Optional[list[OssieVendor]] = None
-    semantic_model: list[OssieSemanticModel]
 
     def to_ossie_yaml(self, **kwargs: Any) -> str:
         """Serialize to Ossie-compliant YAML (uses field aliases and excludes None values)."""
